@@ -206,11 +206,11 @@
         }
 
         .hero-visual {
-            width: 380px;
-            height: 280px;
-            border-radius: 20px;
+            width: 520px;
+            height: 360px;
+            border-radius: 24px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.25);
             position: relative;
         }
 
@@ -218,7 +218,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 20px;
+            border-radius: 24px;
         }
 
         .hero-visual .video-overlay {
@@ -854,7 +854,7 @@
     <!-- Header -->
     <header class="header">
         <div class="header-container">
-            <a href="#" class="logo">
+            <a href="{{ url_for('dashboard') if session.get('logged_in') else '#' }}" class="logo">
                 <div class="logo-icon">
                     <img src="{{ url_for('static', filename='logo.png') }}" alt="Intellexa Logo">
                 </div>

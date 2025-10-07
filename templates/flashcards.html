@@ -494,7 +494,7 @@
     <!-- Header -->
     <header class="header">
         <div class="header-container">
-            <a href="{{ url_for('home') }}" class="logo">
+            <a href="{{ url_for('dashboard') if session.get('logged_in') else url_for('home') }}" class="logo">
                 <div class="logo-icon">
                     <img src="{{ url_for('static', filename='logo.png') }}" alt="Intellexa Logo">
                 </div>

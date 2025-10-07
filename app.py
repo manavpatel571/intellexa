@@ -8,6 +8,8 @@ from pypdf import PdfReader
 import json
 from dotenv import load_dotenv
 import re
+import requests
+from urllib.parse import urlparse, parse_qs
 
 # Load environment variables
 load_dotenv()
@@ -135,6 +137,169 @@ def extract_text_from_pdf(pdf_path):
     except Exception as e:
         print(f"Error extracting text from PDF: {e}")
         return None
+
+def extract_video_id(youtube_url):
+    """Extract video ID from YouTube URL"""
+    try:
+        parsed_url = urlparse(youtube_url)
+        if parsed_url.hostname in ['www.youtube.com', 'youtube.com']:
+            # Regular YouTube URL format
+            if parsed_url.path == '/watch':
+                return parse_qs(parsed_url.query).get('v', [None])[0]
+            # YouTube short URL format
+            elif parsed_url.path.startswith('/v/'):
+                return parsed_url.path.split('/v/')[1]
+        elif parsed_url.hostname in ['youtu.be']:
+            # Shortened YouTube URL format
+            return parsed_url.path.lstrip('/')
+        return None
+    except Exception as e:
+        print(f"Error extracting video ID: {e}")
+        return None
+
+def get_youtube_transcript(video_url):
+    """Get transcript from YouTube video using yt_dlp (supports Hindi and English)"""
+    try:
+        import yt_dlp
+        import re
+        import requests
+
+        ydl_opts = {
+            "skip_download": True,
+            "writesubtitles": True,
+            "writeautomaticsub": True,
+            "subtitleslangs": ["hi", "en"],
+            "quiet": True,
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(video_url, download=False)
+            subs = info.get("automatic_captions", {}) or info.get("subtitles", {})
+
+            # Prefer English → Hindi → any available
+            lang = None
+            if "en" in subs:
+                lang = "en"
+            elif "hi" in subs:
+                lang = "hi"
+            elif subs:
+                lang = list(subs.keys())[0]
+
+            if not lang:
+                return None
+
+            # Get subtitle file URL
+            subtitle_url = subs[lang][-1]["url"]
+
+            # Fetch and clean subtitle content
+            xml_text = requests.get(subtitle_url).text
+            # Remove XML tags and extra whitespace
+            text = re.sub(r"<[^>]+>", "", xml_text)
+            text = re.sub(r"\s+", " ", text).strip()
+            return text
+
+    except ImportError:
+        print("yt_dlp not installed. Please install it with: pip install yt-dlp")
+        return None
+    except Exception as e:
+        print(f"Error getting transcript for video: {e}")
+        return None
+
+def get_video_title(video_id):
+    """Get video title from YouTube API (optional enhancement)"""
+    try:
+        # This would require a YouTube API key for better reliability
+        # For now, we'll use a simple approach or skip it
+        return f"YouTube Video {video_id}"
+    except Exception as e:
+        print(f"Error getting video title: {e}")
+        return f"YouTube Video {video_id}"
+
+def create_mindmap_markdown(text):
+    """Generate a markdown mind map using Gemini AI from source text."""
+    if not model:
+        return None
+    try:
+        max_chars = 30000
+        clipped = text[:max_chars]
+        prompt = f"""
+        Create a hierarchical markdown mindmap from the following text.
+        Use proper markdown heading syntax (# for main topics, ## for subtopics, ### for details).
+        Focus on the main concepts and their relationships. Include relevant details and connections between ideas.
+        Keep the structure clean and organized.
+
+        Format the output exactly like this example:
+        # Main Topic
+        ## Subtopic 1
+        ### Detail 1
+        - Key point 1
+        - Key point 2
+        ### Detail 2
+        ## Subtopic 2
+        ### Detail 3
+        ### Detail 4
+
+        Text to analyze: {clipped}
+
+        Respond only with the markdown mindmap, no additional text.
+        """
+        response = model.generate_content(prompt)
+        return response.text.strip() if hasattr(response, 'text') and response.text else None
+    except Exception as e:
+        print(f"Error generating mindmap markdown: {e}")
+        return None
+
+def build_markmap_html(markdown_content):
+    """Return a full HTML document that renders a Markmap with theme colors."""
+    if not markdown_content:
+        return None
+    safe_md = markdown_content.replace('`', '\\`').replace('${', '\\${')
+    # Theme colors
+    primary = "#334EAC"
+    accent = "#081F5C"
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            html, body {{ height: 100%; margin: 0; background: #FFFFFF; }}
+            #mindmap {{ width: 100%; height: 100%; }}
+        </style>
+        <script src="https://cdn.jsdelivr.net/npm/d3@6"></script>
+        <script src="https://cdn.jsdelivr.net/npm/markmap-view"></script>
+        <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.14.3/dist/browser/index.min.js"></script>
+    </head>
+    <body>
+        <svg id="mindmap"></svg>
+        <script>
+            window.onload = () => {{
+                const markdown = `{safe_md}`;
+                const transformer = new markmap.Transformer();
+                const {{ root }} = transformer.transform(markdown);
+                const mm = new markmap.Markmap(document.querySelector('#mindmap'), {{
+                    maxWidth: 520,
+                    color: (node) => {{
+                        const palette = ['{primary}', '#1e3a8a', '#64748b', '{accent}'];
+                        return palette[node.depth % palette.length];
+                    }},
+                    paddingX: 18,
+                    autoFit: true,
+                    initialExpandLevel: 2,
+                    duration: 600,
+                }});
+                mm.setData(root);
+                mm.fit();
+            }};
+        </script>
+    </body>
+    </html>
+    """
+    return html
+
+def build_mermaid_flow_html(text):
+    """Deprecated: concept flow removed."""
+    return None
 
 def generate_summary(text, difficulty="standard"):
     """Generate summary using Gemini AI"""
@@ -787,6 +952,173 @@ def upload_document():
     else:
         return jsonify({'error': 'Failed to process files'}), 400
 
+@app.route('/upload_mixed', methods=['POST'])
+def upload_mixed():
+    """Create one study set from multiple PDFs and YouTube URLs."""
+    if not session.get('logged_in'):
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    user_id = session.get('user_id')
+
+    files = request.files.getlist('files') if 'files' in request.files else []
+    urls_json = request.form.get('urls')
+    set_title = request.form.get('set_title', '').strip()
+    combine = request.form.get('combine', '1') == '1'
+
+    urls = []
+    if urls_json:
+        try:
+            urls = json.loads(urls_json)
+        except Exception:
+            urls = []
+
+    if not files and not urls:
+        return jsonify({'error': 'No inputs provided'}), 400
+
+    full_text = ""
+    subjects = []
+    components = []
+
+    # Process PDFs
+    for file in files:
+        if file.filename and file.filename.endswith('.pdf'):
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f"{timestamp}_{file.filename}"
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            text = extract_text_from_pdf(filepath) or ''
+            if text:
+                full_text += ("\n\n" + text)
+                subjects.append(detect_subject(text))
+                components.append({'type': 'pdf', 'path': filepath})
+
+    # Process YouTube URLs
+    for u in urls:
+        vid = extract_video_id(u)
+        if not vid:
+            continue
+        transcript = get_youtube_transcript(u) or ''
+        if transcript:
+            full_text += ("\n\n" + transcript)
+            subjects.append(detect_subject(transcript))
+            components.append({'type': 'youtube', 'url': f'https://www.youtube.com/watch?v={vid}'})
+
+    if not full_text.strip():
+        return jsonify({'error': 'Failed to extract content from inputs'}), 400
+
+    # Title and subject
+    dominant_subject = next((s for s in subjects if s and s != 'General'), None) or 'General'
+    title = set_title or (dominant_subject if dominant_subject != 'General' else 'Study Set')
+
+    # Generate AI artifacts
+    summary = generate_summary(full_text)
+    flashcards_data = generate_flashcards(full_text)
+    quiz_data = generate_quiz(full_text)
+
+    # Save to DB
+    conn = get_db()
+    cursor = conn.execute('''
+        INSERT INTO materials (user_id, title, subject, file_type, file_path, text_content, summary)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (user_id, title, dominant_subject, 'mixed', json.dumps(components), full_text, summary))
+    material_id = cursor.lastrowid
+
+    for fc in flashcards_data:
+        conn.execute('INSERT INTO flashcards (material_id, question, answer) VALUES (?, ?, ?)',
+                     (material_id, fc.get('question', ''), fc.get('answer', '')))
+    for q in quiz_data:
+        conn.execute('INSERT INTO quizzes (material_id, question, options, correct_answer) VALUES (?, ?, ?, ?)',
+                     (material_id, q.get('question', ''), json.dumps(q.get('options', [])), q.get('correct', 0)))
+    conn.execute('INSERT INTO user_activity (user_id, material_id, activity_type) VALUES (?, ?, ?)',
+                 (user_id, material_id, 'upload_mixed'))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'success': True, 'message': 'Study set created successfully', 'materials': [{'id': material_id, 'title': title, 'subject': dominant_subject}]})
+
+@app.route('/add_url', methods=['POST'])
+def add_youtube_url():
+    """Handle YouTube URL submission and processing"""
+    if not session.get('logged_in'):
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    user_id = session.get('user_id')
+    data = request.json
+    youtube_url = data.get('url', '').strip()
+
+    if not youtube_url:
+        return jsonify({'error': 'Please provide a YouTube URL'}), 400
+
+    # Validate YouTube URL
+    video_id = extract_video_id(youtube_url)
+    if not video_id:
+        return jsonify({'error': 'Invalid YouTube URL. Please provide a valid YouTube video link.'}), 400
+
+    try:
+        # Get transcript from YouTube
+        transcript = get_youtube_transcript(youtube_url)
+        if not transcript:
+            return jsonify({'error': 'Could not extract transcript from this video. The video might not have captions available.'}), 400
+
+        # Detect subject/topic and set a meaningful title
+        subject = detect_subject(transcript)
+        detected_topic = subject if subject and subject != "General" else None
+        # Fallback to YouTube title placeholder if topic uncertain
+        title = detected_topic or get_video_title(video_id)
+
+        # Generate summary
+        summary = generate_summary(transcript)
+
+        # Save to database
+        conn = get_db()
+        cursor = conn.execute('''
+            INSERT INTO materials (user_id, title, subject, file_type, file_path, text_content, summary)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (user_id, title, subject, 'youtube', f'https://www.youtube.com/watch?v={video_id}', transcript, summary))
+        material_id = cursor.lastrowid
+
+        # Generate flashcards
+        flashcards_data = generate_flashcards(transcript)
+        for fc in flashcards_data:
+            conn.execute('''
+                INSERT INTO flashcards (material_id, question, answer)
+                VALUES (?, ?, ?)
+            ''', (material_id, fc.get('question', ''), fc.get('answer', '')))
+
+        # Generate quiz questions
+        quiz_data = generate_quiz(transcript)
+        for q in quiz_data:
+            conn.execute('''
+                INSERT INTO quizzes (material_id, question, options, correct_answer)
+                VALUES (?, ?, ?, ?)
+            ''', (material_id, q.get('question', ''), json.dumps(q.get('options', [])), q.get('correct', 0)))
+
+        # Log activity
+        conn.execute('''
+            INSERT INTO user_activity (user_id, material_id, activity_type)
+            VALUES (?, ?, ?)
+        ''', (user_id, material_id, 'url_upload'))
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'message': 'YouTube video processed successfully',
+            'material': {
+                'id': material_id,
+                'title': title,
+                'subject': subject,
+                'transcript_length': len(transcript)
+            }
+        })
+
+    except Exception as e:
+        print(f"Error processing YouTube URL: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to process YouTube video. Please try again.'}), 500
+
 def detect_subject(text):
     """Detect subject from text content using AI"""
     if not model:
@@ -1067,6 +1399,77 @@ Provide a clear, helpful answer."""
     except Exception as e:
         print(f"Error in chat: {e}")
         return jsonify({'error': 'Failed to generate response'}), 500
+
+@app.route('/generate_visuals', methods=['POST'])
+def generate_visuals():
+    """Generate visual suggestions HTML (mindmap + second visual)."""
+    if not session.get('logged_in'):
+        return jsonify({'error': 'Not authenticated'}), 401
+    if not model:
+        return jsonify({'error': 'AI service not available'}), 503
+
+    data = request.json or {}
+    material_id = data.get('material_id')
+    if not material_id:
+        return jsonify({'error': 'Material ID required'}), 400
+
+    try:
+        conn = get_db()
+        material = conn.execute('SELECT text_content, title FROM materials WHERE id = ?', (material_id,)).fetchone()
+        conn.close()
+        if not material:
+            return jsonify({'error': 'Material not found'}), 404
+
+        text = (material['text_content'] or '')
+
+        mindmap_md = create_mindmap_markdown(text)
+        mindmap_html = build_markmap_html(mindmap_md) if mindmap_md else None
+
+        flow_html = build_mermaid_flow_html(text)
+
+        return jsonify({
+            'success': True,
+            'mindmap_html': mindmap_html,
+            'flow_html': flow_html
+        })
+    except Exception as e:
+        print(f"Error generating visuals: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to generate visual content'}), 500
+
+@app.route('/explain_like_5', methods=['POST'])
+def explain_like_5():
+    """Return an explanation like I'm 5 based on the material context."""
+    if not session.get('logged_in'):
+        return jsonify({'error': 'Not authenticated'}), 401
+    if not model:
+        return jsonify({'error': 'AI service not available'}), 503
+
+    data = request.json or {}
+    material_id = data.get('material_id')
+    if not material_id:
+        return jsonify({'error': 'Material ID required'}), 400
+
+    try:
+        conn = get_db()
+        row = conn.execute('SELECT text_content FROM materials WHERE id = ?', (material_id,)).fetchone()
+        conn.close()
+        context = row['text_content'][:4000] if row and row['text_content'] else ''
+
+        prompt = f"""
+        Explain the following study material like I'm 5 years old.
+        Use super simple words, short sentences, friendly tone, and concrete examples.
+        Avoid jargon. If a big idea appears, compare it to everyday things.
+
+        Material:
+        {context}
+        """
+        response = model.generate_content(prompt)
+        return jsonify({'success': True, 'text': response.text})
+    except Exception as e:
+        print(f"Error in explain_like_5: {e}")
+        return jsonify({'error': 'Failed to generate explanation'}), 500
 
 @app.route('/logout')
 def logout():

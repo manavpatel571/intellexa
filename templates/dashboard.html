@@ -285,6 +285,38 @@
             margin-bottom: 16px;
         }
 
+        .card-delete {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 28px;
+            height: 28px;
+            background: rgba(255,255,255,0.9);
+            border: 1px solid #E5E7EB;
+            border-radius: 50%;
+            color: #9CA3AF;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .study-set-card:hover .card-delete {
+            display: flex;
+        }
+
+        .card-delete:hover {
+            color: #EF4444;
+            border-color: #EF4444;
+            background: #FFFFFF;
+        }
+
+        .card-delete:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+        }
+
         .card-icon {
             width: 40px;
             height: 40px;
@@ -848,7 +880,7 @@
     <!-- Header -->
     <header class="header">
         <div class="header-container">
-            <a href="{{ url_for('home') }}" class="logo">
+            <a href="{{ url_for('dashboard') if session.get('logged_in') else url_for('home') }}" class="logo">
                 <div class="logo-icon">
                     <img src="{{ url_for('static', filename='logo.png') }}" alt="Intellexa Logo">
                 </div>
@@ -917,9 +949,16 @@
                     <div class="study-set-card" data-material-id="{{ material.id }}">
                         <div class="card-header">
                             <div class="card-icon">
-                                <i class="fas fa-file-pdf"></i>
+                                {% if material.file_type == 'youtube' %}
+                                    <i class="fab fa-youtube" style="color: #FF0000;"></i>
+                                {% else %}
+                                    <i class="fas fa-file-pdf"></i>
+                                {% endif %}
                             </div>
                             <div class="card-type">{{ material.file_type|upper }}</div>
+                            <button class="card-delete" type="button" title="Remove" onclick="deleteMaterial(event, {{ material.id }})" aria-label="Remove set">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
                         <h3 class="card-title">{{ material.title }}</h3>
                         <div class="card-meta">
@@ -968,11 +1007,54 @@
                         <input type="file" id="file-input" class="file-input" accept=".pdf" multiple>
                     </div>
                     <div id="fileList" class="file-list"></div>
+                    <div style="margin-top:20px;">
+                        <label style="display:block; font-weight:600; color:#081F5C; margin-bottom:8px;">Optional: Add YouTube URLs (one per line)</label>
+                        <textarea id="url-textarea" placeholder="https://www.youtube.com/watch?v=...\nhttps://youtu.be/..." style="width:100%; min-height:90px; border:2px solid #E5E7EB; border-radius:8px; padding:12px; font-size:14px;"></textarea>
+                    </div>
+                    <div style="display:flex; gap:12px; margin-top:16px; align-items:center;">
+                        <input type="checkbox" id="combine-set" checked>
+                        <label for="combine-set" style="color:#374151;">Create <strong>one</strong> study set from all PDFs and URLs</label>
+                    </div>
+                    <div style="margin-top:16px;">
+                        <label style="display:block; font-weight:600; color:#081F5C; margin-bottom:8px;">Set title (optional)</label>
+                        <input id="set-title" type="text" placeholder="e.g., LLMs crash course" style="width:100%; padding:12px; border:2px solid #E5E7EB; border-radius:8px; font-size:16px;">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button onclick="closeUploadModal()" class="btn-secondary">Cancel</button>
-                    <button onclick="uploadFiles()" class="btn-primary" id="uploadBtn" disabled>
+                    <button onclick="uploadMixed()" class="btn-primary" id="uploadBtn" disabled>
                         <span id="uploadBtnText">Create</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- URL Modal -->
+        <div id="urlModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Add YouTube Video</h2>
+                    <span class="close" onclick="closeUrlModal()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="url-input-section">
+                        <label for="youtube-url" style="display: block; margin-bottom: 8px; font-weight: 600; color: #081F5C;">YouTube Video URL</label>
+                        <input type="url" id="youtube-url" placeholder="https://www.youtube.com/watch?v=..." style="width: 100%; padding: 12px; border: 2px solid #E5E7EB; border-radius: 8px; font-size: 16px; margin-bottom: 20px;" oninput="validateUrl()">
+                        <div id="url-error" style="color: #EF4444; font-size: 14px; margin-bottom: 15px; display: none;"></div>
+                        <div class="url-info" style="background: #F8FAFC; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <h4 style="margin: 0 0 10px 0; color: #081F5C; font-size: 16px;"><i class="fas fa-info-circle" style="color: #334EAC; margin-right: 8px;"></i>How it works</h4>
+                            <p style="margin: 0; font-size: 14px; color: #6B7280; line-height: 1.5;">
+                                We'll extract the transcript from your YouTube video and use AI to generate:
+                                <br>• Summaries • Flashcards • Quiz questions • Chat responses
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button onclick="closeUrlModal()" class="btn-secondary">Cancel</button>
+                    <button onclick="processYouTubeUrl()" class="btn-primary" id="urlBtn" disabled>
+                        <span id="urlBtnText">Process Video</span>
                         <i class="fas fa-arrow-right"></i>
                     </button>
                 </div>
@@ -1072,19 +1154,28 @@
             updateFileList();
         }
 
-        function uploadFiles() {
+        function uploadMixed() {
             if (selectedFiles.length === 0) return;
 
             const formData = new FormData();
             selectedFiles.forEach(file => {
                 formData.append('files', file);
             });
+            const urlsRaw = document.getElementById('url-textarea').value.trim();
+            const urls = urlsRaw ? urlsRaw.split(/\n+/).map(s => s.trim()).filter(Boolean) : [];
+            if (urls.length) {
+                formData.append('urls', JSON.stringify(urls));
+            }
+            const combine = document.getElementById('combine-set').checked;
+            const setTitle = document.getElementById('set-title').value.trim();
+            formData.append('combine', combine ? '1' : '0');
+            if (setTitle) formData.append('set_title', setTitle);
 
             // Show loading overlay
             document.getElementById('loadingOverlay').classList.add('show');
             closeUploadModal();
 
-            fetch('/upload', {
+            fetch('/upload_mixed', {
                 method: 'POST',
                 body: formData
             })
@@ -1111,6 +1202,27 @@
 
         function openStudyMaterial(materialId) {
             window.location.href = `/study/${materialId}`;
+        }
+
+        function deleteMaterial(event, materialId) {
+            event.stopPropagation();
+            const card = event.currentTarget.closest('.study-set-card');
+            if (!confirm('Remove this study set?')) return;
+            fetch(`/delete_material/${materialId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data && data.success) {
+                    card.style.opacity = '0';
+                    setTimeout(() => card.remove(), 200);
+                    showFlashMessage('Study set removed', 'info');
+                } else {
+                    showFlashMessage(data.error || 'Failed to remove set', 'error');
+                }
+            })
+            .catch(() => showFlashMessage('Failed to remove set', 'error'));
         }
 
         function showFlashMessage(message, type) {
@@ -1175,6 +1287,109 @@
         document.getElementById('uploadModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeUploadModal();
+            }
+        });
+
+        // URL Modal functions
+        function openUrlModal() {
+            document.getElementById('urlModal').classList.add('show');
+            document.getElementById('youtube-url').focus();
+        }
+
+        function closeUrlModal() {
+            document.getElementById('urlModal').classList.remove('show');
+            document.getElementById('youtube-url').value = '';
+            document.getElementById('url-error').style.display = 'none';
+            document.getElementById('urlBtn').disabled = true;
+        }
+
+        function validateUrl() {
+            const urlInput = document.getElementById('youtube-url');
+            const errorDiv = document.getElementById('url-error');
+            const urlBtn = document.getElementById('urlBtn');
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                errorDiv.style.display = 'none';
+                urlBtn.disabled = true;
+                return;
+            }
+
+            // Basic YouTube URL validation
+            const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/v\/)[a-zA-Z0-9_-]{11}/;
+            console.log('Validating URL:', url);
+            console.log('Regex test result:', youtubeRegex.test(url));
+            if (!youtubeRegex.test(url)) {
+                errorDiv.textContent = 'Please enter a valid YouTube URL (e.g., https://www.youtube.com/watch?v=...)';
+                errorDiv.style.display = 'block';
+                urlBtn.disabled = true;
+                return;
+            }
+
+            errorDiv.style.display = 'none';
+            urlBtn.disabled = false;
+        }
+
+        function processYouTubeUrl() {
+            const url = document.getElementById('youtube-url').value.trim();
+            if (!url) return;
+
+            // Show loading overlay
+            document.getElementById('loadingOverlay').classList.add('show');
+            document.getElementById('loadingOverlay').querySelector('p').textContent = 'Extracting transcript from YouTube video...';
+            document.getElementById('loadingOverlay').querySelector('.loading-subtext').textContent = 'This may take a moment';
+            closeUrlModal();
+
+            fetch('/add_url', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url: url })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingOverlay').classList.remove('show');
+
+                if (data.success) {
+                    showFlashMessage(data.message, 'success');
+
+                    // Add new material to the grid with animation
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showFlashMessage(data.error || 'Failed to process YouTube video', 'error');
+                }
+            })
+            .catch(error => {
+                document.getElementById('loadingOverlay').classList.remove('show');
+                showFlashMessage('Failed to process YouTube video: ' + error.message, 'error');
+            });
+        }
+
+        // Update Add URL button to open modal
+        document.querySelectorAll('a[href="#"]').forEach(btn => {
+            if (btn.textContent.includes('Add URL')) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    openUrlModal();
+                });
+            }
+        });
+
+        // Close URL modal on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeUrlModal();
+            }
+        });
+
+        // Close URL modal on outside click
+        document.getElementById('urlModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeUrlModal();
             }
         });
     </script>

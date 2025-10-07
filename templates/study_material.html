@@ -258,6 +258,24 @@
             color: #6B7280;
         }
 
+        .tag-youtube {
+            background: #FF0000;
+            color: white;
+        }
+
+        .tag-link {
+            background: #FF0000;
+            color: white;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .tag-link:hover {
+            background: #CC0000;
+        }
+
         .learning-mode-card {
             background: #FFFFFF;
             border-radius: 16px;
@@ -726,6 +744,92 @@
             }
         }
 
+        /* Visual overlay for interactive visuals */
+        .visual-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1200;
+        }
+
+        .visual-overlay.show {
+            display: flex;
+        }
+
+        .visual-container {
+            width: 90vw;
+            height: 80vh;
+            background: #FFFFFF;
+            border-radius: 20px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr;
+            border: 2px solid #E5E7EB;
+            position: relative;
+        }
+
+        .visual-header {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            z-index: 1300;
+        }
+
+        .visual-close {
+            background: #FFFFFF;
+            border: 2px solid #E5E7EB;
+            color: #334EAC;
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .visual-pane {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .visual-pane h3 {
+            margin: 0;
+            padding: 12px 16px;
+            background: #F3F4F6;
+            color: #081F5C;
+            border-bottom: 1px solid #E5E7EB;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .visual-pane iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            flex: 1;
+        }
+
+        .chat-suggestions {
+            display: flex;
+            gap: 8px;
+            padding: 0 16px 12px 16px;
+        }
+
+        .chip {
+            border: 2px solid #334EAC;
+            color: #334EAC;
+            background: #FFFFFF;
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
         @media (max-width: 768px) {
             .chat-modal {
                 width: calc(100vw - 40px);
@@ -767,7 +871,7 @@
     <!-- Header -->
     <header class="header">
         <div class="header-container">
-            <a href="{{ url_for('home') }}" class="logo">
+            <a href="{{ url_for('dashboard') if session.get('logged_in') else url_for('home') }}" class="logo">
                 <div class="logo-icon">
                     <img src="{{ url_for('static', filename='logo.png') }}" alt="Intellexa Logo">
                 </div>
@@ -811,16 +915,28 @@
             <div class="document-card">
                 <div class="document-header">
                     <div class="document-icon">
-                        <i class="fas fa-file-pdf"></i>
+                        {% if material.file_type == 'youtube' %}
+                            <i class="fab fa-youtube" style="color: #FF0000;"></i>
+                        {% else %}
+                            <i class="fas fa-file-pdf"></i>
+                        {% endif %}
                     </div>
                     <div class="document-info">
                         <h1>{{ material.title or 'Supervised Learning' }}</h1>
                         <div class="document-tags">
-                            <span class="tag tag-pdf">PDF</span>
+                            {% if material.file_type == 'youtube' %}
+                                <span class="tag tag-youtube">YOUTUBE VIDEO</span>
+                                <a href="{{ material.file_path }}" target="_blank" class="tag tag-link" style="background: #FF0000; color: white;">
+                                    <i class="fas fa-external-link-alt"></i>
+                                    Watch Video
+                                </a>
+                            {% else %}
+                                <span class="tag tag-pdf">PDF</span>
+                            {% endif %}
                             <span class="tag tag-subject">{{ material.subject or 'Machine Learning' }}</span>
                             <span class="tag tag-time">
                                 <i class="fas fa-clock"></i>
-                                {{ material.date or '2 days ago' }}
+                                {{ material.created_at|datetime }}
                             </span>
                         </div>
                     </div>
@@ -925,6 +1041,10 @@
                 <div class="typing-dot"></div>
             </div>
         </div>
+        <div class="chat-suggestions">
+            <button class="chip" onclick="openVisualSuggestions()">Generate visual suggestions</button>
+            <button class="chip" onclick="explainLikeFive()">Explain like I'm 5</button>
+        </div>
         <div class="chat-input-container">
             <input type="text" class="chat-input" id="chatInput" placeholder="Type your question..." onkeypress="handleChatKeyPress(event)">
             <button class="chat-btn voice-btn" id="voiceBtn" onclick="toggleVoiceInput()" title="Voice input">
@@ -933,6 +1053,19 @@
             <button class="chat-btn" id="sendBtn" onclick="sendMessage()" title="Send message">
                 <i class="fas fa-paper-plane"></i>
             </button>
+        </div>
+    </div>
+
+    <!-- Visual overlay -->
+    <div class="visual-overlay" id="visualOverlay">
+        <div class="visual-header">
+            <button class="visual-close" onclick="closeVisualOverlay()">Close ✕</button>
+        </div>
+        <div class="visual-container">
+            <div class="visual-pane">
+                <h3>Mind Map</h3>
+                <iframe id="mindmapFrame"></iframe>
+            </div>
         </div>
     </div>
 
@@ -1133,6 +1266,63 @@
                 
                 addMessageToChat('ai', '❌ Connection error. Please try again.');
                 console.error('Chat error:', error);
+            });
+        }
+
+        function openVisualSuggestions() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            typingIndicator.classList.add('active');
+            fetch('/generate_visuals', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ material_id: {{ material.id if material else 'null' }} })
+            })
+            .then(r => r.json())
+            .then(data => {
+                typingIndicator.classList.remove('active');
+                if (!data.success) {
+                    addMessageToChat('ai', data.error || 'Failed to generate visuals.');
+                    return;
+                }
+                const overlay = document.getElementById('visualOverlay');
+                const mindmapFrame = document.getElementById('mindmapFrame');
+                mindmapFrame.srcdoc = data.mindmap_html || '<html><body style="font-family:Inter,sans-serif;padding:20px;color:#081F5C;">No mind map available.</body></html>';
+                overlay.classList.add('show');
+            })
+            .catch(err => {
+                typingIndicator.classList.remove('active');
+                addMessageToChat('ai', 'Connection error while generating visuals.');
+                console.error(err);
+            });
+        }
+
+        function closeVisualOverlay() {
+            document.getElementById('visualOverlay').classList.remove('show');
+            document.getElementById('mindmapFrame').srcdoc = '';
+            document.getElementById('flowFrame').srcdoc = '';
+        }
+
+        function explainLikeFive() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            typingIndicator.classList.add('active');
+            fetch('/explain_like_5', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ material_id: {{ material.id if material else 'null' }} })
+            })
+            .then(r => r.json())
+            .then(data => {
+                typingIndicator.classList.remove('active');
+                if (data.success) {
+                    addMessageToChat('ai', data.text);
+                } else {
+                    addMessageToChat('ai', data.error || 'Failed to generate explanation.');
+                }
+            })
+            .catch(err => {
+                typingIndicator.classList.remove('active');
+                addMessageToChat('ai', 'Connection error while generating explanation.');
+                console.error(err);
             });
         }
 

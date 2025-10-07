@@ -82,8 +82,9 @@
             font-size: 48px;
             font-weight: 700;
             color: #334EAC;
-            margin-bottom: 40px;
-            align-self: flex-start;
+            margin-bottom: 30px;
+            align-self: center;
+            text-align: center;
             width: 100%;
         }
 
@@ -92,7 +93,7 @@
             gap: 15px;
             margin-bottom: 30px;
             width: 100%;
-            justify-content: flex-start;
+            justify-content: center;
         }
 
         .social-btn {
@@ -118,7 +119,6 @@
 
         .google-btn::before { content: "G+"; }
         .facebook-btn::before { content: "f"; }
-        .github-btn::before { content: "🐙"; }
         .linkedin-btn::before { content: "in"; }
 
         .separator {
@@ -126,7 +126,7 @@
             font-size: 16px;
             margin-bottom: 30px;
             width: 100%;
-            text-align: left;
+            text-align: center;
         }
 
         .form-container {
@@ -237,16 +237,11 @@
     </div>
     
     <div class="right-section">
-        <div class="logo">
-            <img src="{{ url_for('static', filename='logo.png') }}" alt="Intellexa Logo">
-            Intellexa
-        </div>
         <h1 class="signup-title">Create Account</h1>
         
         <div class="social-buttons">
             <button class="social-btn google-btn"></button>
             <button class="social-btn facebook-btn"></button>
-            <button class="social-btn github-btn"></button>
             <button class="social-btn linkedin-btn"></button>
         </div>
         
