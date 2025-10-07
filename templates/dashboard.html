@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Intellexa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #F7F2EB;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #FFFFFF;
+            box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: 700;
+            font-size: 32px;
+            color: #081F5C;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 12px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .upload-btn {
+            padding: 12px 20px;
+            background: #334EAC;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 14px;
+            color: #FFFFFF;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .upload-btn:hover {
+            background: #1e3a8a;
+            transform: translateY(-2px);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: #334EAC;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(51, 78, 172, 0.3);
+        }
+
+        .nav-buttons {
+            position: relative;
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 60px;
+            right: 0;
+            background: #FFFFFF;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            padding: 8px 0;
+            min-width: 180px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .profile-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: #374151;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .dropdown-item:hover {
+            background: #F3F4F6;
+            color: #334EAC;
+        }
+
+        .dropdown-item i {
+            width: 16px;
+            color: #6B7280;
+        }
+
+        .dropdown-item:hover i {
+            color: #334EAC;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 120px 40px 40px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .page-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: #081F5C;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .action-btn {
+            padding: 12px 20px;
+            background: transparent;
+            border: 2px solid #334EAC;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #334EAC;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-btn:hover {
+            background: #334EAC;
+            color: white;
+        }
+
+        .welcome-section {
+            margin-bottom: 40px;
+        }
+
+        .welcome-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #081F5C;
+            margin-bottom: 10px;
+        }
+
+        .welcome-subtitle {
+            font-size: 18px;
+            color: #6B7280;
+        }
+
+        .study-sets-section {
+            margin-bottom: 40px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #081F5C;
+        }
+
+        .view-all-link {
+            color: #334EAC;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        .view-all-link:hover {
+            text-decoration: underline;
+        }
+
+        .study-sets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .study-set-card {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .study-set-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            background: #F3F4F6;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6B7280;
+            font-size: 20px;
+        }
+
+        .card-type {
+            background: #E0E7FF;
+            color: #334EAC;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #081F5C;
+            margin-bottom: 8px;
+        }
+
+        .card-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #6B7280;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .card-tag {
+            background: #E0E7FF;
+            color: #334EAC;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: inline-block;
+        }
+
+        .card-description {
+            color: #6B7280;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .progress-section {
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #E5E7EB;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #334EAC;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #6B7280;
+        }
+
+        .card-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #6B7280;
+        }
+
+        .card-action-btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 2px solid #334EAC;
+            border-radius: 8px;
+            color: #334EAC;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .card-action-btn:hover {
+            background: #334EAC;
+            color: white;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .feature-card {
+            background: #FFFFFF;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #334EAC, #1e3a8a);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 24px;
+        }
+
+        .feature-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #081F5C;
+            margin-bottom: 15px;
+        }
+
+        .feature-description {
+            font-size: 14px;
+            color: #6B7280;
+            margin-bottom: 20px;
+        }
+
+        .feature-btn {
+            width: 100%;
+            padding: 12px;
+            background: #334EAC;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .feature-btn:hover {
+            background: #1e3a8a;
+        }
+
+        .results-section {
+            background: #FFFFFF;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .results-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #081F5C;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .result-item {
+            background: #F8FAFC;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .result-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #334EAC;
+            margin-bottom: 10px;
+        }
+
+        .result-content {
+            font-size: 14px;
+            color: #6B7280;
+            line-height: 1.6;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #F3F4F6;
+            border-top: 4px solid #334EAC;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .flash-messages {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            z-index: 1001;
+        }
+
+        .flash-message {
+            background: #10B981;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .flash-error {
+            background: #EF4444;
+        }
+
+        .flash-info {
+            background: #3B82F6;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #FFFFFF;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 30px;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .modal-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #081F5C;
+        }
+
+        .close {
+            font-size: 32px;
+            font-weight: 300;
+            color: #6B7280;
+            cursor: pointer;
+            transition: color 0.3s;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: #334EAC;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .upload-area {
+            border: 2px dashed #E5E7EB;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-area.dragover {
+            border-color: #334EAC;
+            background: #F8FAFC;
+        }
+
+        .browse-btn {
+            padding: 12px 24px;
+            background: #334EAC;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .browse-btn:hover {
+            background: #1e3a8a;
+            transform: translateY(-2px);
+        }
+
+        .file-list {
+            margin-top: 20px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: #F8FAFC;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .file-icon {
+            color: #EF4444;
+            font-size: 24px;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #081F5C;
+        }
+
+        .file-remove {
+            color: #EF4444;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 5px;
+            transition: transform 0.2s;
+        }
+
+        .file-remove:hover {
+            transform: scale(1.2);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            padding: 20px 30px;
+            border-top: 1px solid #E5E7EB;
+        }
+
+        .btn-primary, .btn-secondary {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #334EAC;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #1e3a8a;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #6B7280;
+            border: 2px solid #E5E7EB;
+        }
+
+        .btn-secondary:hover {
+            background: #F3F4F6;
+            border-color: #D1D5DB;
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            z-index: 3000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+        }
+
+        .loading-overlay.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+
+        .loading-content .spinner {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+        }
+
+        .loading-content p {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .loading-subtext {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-container {
+                padding: 0 20px;
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .main-container {
+                padding: 140px 20px 40px;
+            }
+
+            .welcome-title {
+                font-size: 36px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .upload-section,
+            .results-section {
+                padding: 20px;
+            }
+
+            .modal-content {
+                width: 95%;
+                max-height: 90vh;
+            }
+
+            .modal-header,
+            .modal-body,
+            .modal-footer {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {% if category == 'error' %}flash-error{% elif category == 'info' %}flash-info{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <a href="{{ url_for('home') }}" class="logo">
+                <div class="logo-icon">
+                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Intellexa Logo">
+                </div>
+                Intellexa
+            </a>
+            <div class="nav-buttons">
+                <a href="{{ url_for('growth_dashboard') }}" class="upload-btn" style="background: #10B981;">
+                    <i class="fas fa-chart-line"></i>
+                    My Growth
+                </a>
+                <a href="#" class="upload-btn" onclick="document.getElementById('file-input').click()">
+                    <i class="fas fa-plus"></i>
+                    Upload New
+                </a>
+                <div class="user-avatar" onclick="toggleProfileDropdown()">{{ user_name[0:2].upper() }}</div>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <a href="{{ url_for('dashboard') }}" class="dropdown-item">
+                        <i class="fas fa-book"></i>
+                        My Library
+                    </a>
+                    <a href="{{ url_for('growth_dashboard') }}" class="dropdown-item">
+                        <i class="fas fa-chart-line"></i>
+                        Dashboard
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="dropdown-item">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Log Out
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">My Study Library</h1>
+            <div class="action-buttons">
+                <a href="#" class="action-btn">
+                    <i class="fas fa-link"></i>
+                    Add URL
+                </a>
+                <a href="#" class="action-btn" onclick="document.getElementById('file-input').click()">
+                    <i class="fas fa-upload"></i>
+                    Upload File
+                </a>
+            </div>
+        </div>
+
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <h2 class="welcome-title">Welcome back, {{ user_name }}!</h2>
+            <p class="welcome-subtitle">Ready to continue your learning journey? {% if materials %}You have {{ materials|length }} study set(s) waiting{% else %}Upload your first study material to get started!{% endif %}</p>
+        </div>
+
+        <!-- Recent Study Sets -->
+        <div class="study-sets-section">
+            <div class="section-header">
+                <h2 class="section-title">Recent Study Sets</h2>
+            </div>
+            
+            <div class="study-sets-grid" id="study-sets-grid">
+                {% if materials %}
+                    {% for material in materials %}
+                    <div class="study-set-card" data-material-id="{{ material.id }}">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            <div class="card-type">{{ material.file_type|upper }}</div>
+                        </div>
+                        <h3 class="card-title">{{ material.title }}</h3>
+                        <div class="card-meta">
+                            <i class="fas fa-clock"></i>
+                            <span>{{ material.created_at|datetime }}</span>
+                        </div>
+                        {% if material.subject %}
+                        <div class="card-tag">{{ material.subject }}</div>
+                        {% endif %}
+                        {% if material.summary %}
+                        <div class="card-description">
+                            {{ material.summary[:150] }}...
+                        </div>
+                        {% endif %}
+                        <button class="card-action-btn" onclick="openStudyMaterial({{ material.id }})">Open Material ></button>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state" style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
+                        <i class="fas fa-book-open" style="font-size: 64px; color: #E5E7EB; margin-bottom: 20px;"></i>
+                        <h3 style="color: #6B7280; margin-bottom: 10px;">No study materials yet</h3>
+                        <p style="color: #9CA3AF; margin-bottom: 20px;">Upload your first PDF to start your learning journey!</p>
+                        <button onclick="openUploadModal()" style="padding: 12px 24px; background: #334EAC; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                            <i class="fas fa-upload"></i> Upload PDF
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Upload Modal -->
+        <div id="uploadModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Upload Study Materials</h2>
+                    <span class="close" onclick="closeUploadModal()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="upload-area" id="uploadArea">
+                        <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #334EAC; margin-bottom: 20px;"></i>
+                        <p style="font-size: 18px; margin-bottom: 10px;">Drag & drop your PDF files here</p>
+                        <p style="color: #6B7280; margin-bottom: 20px;">or</p>
+                        <button onclick="document.getElementById('file-input').click()" class="browse-btn">
+                            Browse Files
+                        </button>
+                        <input type="file" id="file-input" class="file-input" accept=".pdf" multiple>
+                    </div>
+                    <div id="fileList" class="file-list"></div>
+                </div>
+                <div class="modal-footer">
+                    <button onclick="closeUploadModal()" class="btn-secondary">Cancel</button>
+                    <button onclick="uploadFiles()" class="btn-primary" id="uploadBtn" disabled>
+                        <span id="uploadBtnText">Create</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p>Processing your files with AI...</p>
+                <p class="loading-subtext">This may take a moment</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+
+        // Modal functions
+        function openUploadModal() {
+            document.getElementById('uploadModal').classList.add('show');
+            selectedFiles = [];
+            updateFileList();
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.remove('show');
+            selectedFiles = [];
+            document.getElementById('file-input').value = '';
+            updateFileList();
+        }
+
+        // File selection handling
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+                if (file.type === 'application/pdf' && !selectedFiles.find(f => f.name === file.name)) {
+                    selectedFiles.push(file);
+                }
+            });
+            updateFileList();
+            e.target.value = '';
+        });
+
+        // Drag and drop
+        const uploadArea = document.getElementById('uploadArea');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = Array.from(e.dataTransfer.files);
+            files.forEach(file => {
+                if (file.type === 'application/pdf' && !selectedFiles.find(f => f.name === file.name)) {
+                    selectedFiles.push(file);
+                }
+            });
+            updateFileList();
+        });
+
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            const uploadBtn = document.getElementById('uploadBtn');
+            
+            if (selectedFiles.length === 0) {
+                fileList.innerHTML = '';
+                uploadBtn.disabled = true;
+                return;
+            }
+
+            uploadBtn.disabled = false;
+            document.getElementById('uploadBtnText').textContent = `Create (${selectedFiles.length})`;
+
+            fileList.innerHTML = selectedFiles.map((file, index) => `
+                <div class="file-item">
+                    <div class="file-info">
+                        <i class="fas fa-file-pdf file-icon"></i>
+                        <span class="file-name">${file.name}</span>
+                    </div>
+                    <i class="fas fa-times file-remove" onclick="removeFile(${index})"></i>
+                </div>
+            `).join('');
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+        }
+
+        function uploadFiles() {
+            if (selectedFiles.length === 0) return;
+
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+
+            // Show loading overlay
+            document.getElementById('loadingOverlay').classList.add('show');
+            closeUploadModal();
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingOverlay').classList.remove('show');
+                
+                if (data.success) {
+                    showFlashMessage(data.message, 'success');
+                    
+                    // Add new materials to the grid with animation
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showFlashMessage(data.error || 'Upload failed', 'error');
+                }
+            })
+            .catch(error => {
+                document.getElementById('loadingOverlay').classList.remove('show');
+                showFlashMessage('Upload failed: ' + error.message, 'error');
+            });
+        }
+
+        function openStudyMaterial(materialId) {
+            window.location.href = `/study/${materialId}`;
+        }
+
+        function showFlashMessage(message, type) {
+            const flashDiv = document.createElement('div');
+            flashDiv.className = `flash-message ${type === 'error' ? 'flash-error' : type === 'info' ? 'flash-info' : ''}`;
+            flashDiv.textContent = message;
+            
+            const container = document.querySelector('.flash-messages') || document.createElement('div');
+            container.className = 'flash-messages';
+            container.appendChild(flashDiv);
+            document.body.appendChild(container);
+
+            setTimeout(() => {
+                flashDiv.remove();
+                if (container.children.length === 0) {
+                    container.remove();
+                }
+            }, 5000);
+        }
+
+        // Auto-hide flash messages
+        setTimeout(() => {
+            const flashMessages = document.querySelector('.flash-messages');
+            if (flashMessages) {
+                flashMessages.remove();
+            }
+        }, 5000);
+
+        function toggleProfileDropdown() {
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('profileDropdown');
+            const avatar = document.querySelector('.user-avatar');
+            
+            if (!avatar.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Update upload buttons to open modal
+        document.querySelectorAll('a[href="#"]').forEach(btn => {
+            if (btn.textContent.includes('Upload')) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    openUploadModal();
+                });
+            }
+        });
+
+        // Close modal on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeUploadModal();
+            }
+        });
+
+        // Close modal on outside click
+        document.getElementById('uploadModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeUploadModal();
+            }
+        });
+    </script>
+</body>
+</html>

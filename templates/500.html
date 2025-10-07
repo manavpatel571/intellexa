@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Error - Intellexa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #F7F2EB;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .error-container {
+            max-width: 600px;
+            padding: 40px;
+        }
+
+        .error-code {
+            font-size: 120px;
+            font-weight: 800;
+            color: #EF4444;
+            margin-bottom: 20px;
+        }
+
+        .error-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #081F5C;
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            font-size: 18px;
+            color: #6B7280;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            background: #334EAC;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 16px;
+            color: #FFFFFF;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: #1e3a8a;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-code">500</div>
+        <h1 class="error-title">Server Error</h1>
+        <p class="error-message">
+            Something went wrong on our end. We're working to fix this issue. Please try again later.
+        </p>
+        <a href="{{ url_for('home') }}" class="btn">Go Home</a>
+    </div>
+</body>
+</html>
